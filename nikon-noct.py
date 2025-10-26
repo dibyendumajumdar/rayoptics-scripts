@@ -1,8 +1,10 @@
 from opticalglass import opticalmedium as om
+from rayoptics.environment import *
 from rayoptics.elem.profiles import EvenPolynomial
 from rayoptics.optical.opticalmodel import OpticalModel
 from rayoptics.raytr.opticalspec import PupilSpec, FieldSpec, WvlSpec
 from rayoptics.raytr import trace
+import matplotlib.pyplot as plt
 
 # New glass types
 # d,F,C,g
@@ -27,6 +29,8 @@ opm = OpticalModel()
 sm  = opm.seq_model
 osp = opm.optical_spec
 pm = opm.parax_model
+ar = opm['analysis_results']
+
 osp.pupil = PupilSpec(osp, key=['image', 'f/#'], value=0.98)
 osp.field_of_view = FieldSpec(osp, key=['object', 'angle'], flds=[0., 19.98])
 osp.spectral_region = WvlSpec([(486.1327, 0.5), (587.5618, 1.0), (656.2725, 0.5)], ref_wl=1)
@@ -179,6 +183,7 @@ sm.do_apertures = False
 opm.update_model()
 #apply_paraxial_vignetting(opm)
 sm.list_model()
+sm.list_decenters(full=True)
 # List the optical specifications
 pm.first_order_data()
 # List the paraxial model
@@ -197,5 +202,28 @@ all_fields = trace.trace_all_fields(opm)
 print(all_fields)
 
 rays = trace.trace_boundary_rays(opm)
+
+to_pkg = compute_third_order(opm)
+print(to_pkg)
+
+ax_ray, pr_ray, fod = ar['parax_data']
+n_last = pm.sys[-1][mc.indx]
+u_last = ax_ray[-1][mc.slp]
+tabr = to.seidel_to_transverse_aberration(to_pkg.loc['sum',:], n_last, u_last)
+print(tabr)
+
+central_wv = opm.nm_to_sys_units(sm.central_wavelength())
+wabr = to.seidel_to_wavefront(to_pkg.loc['sum',:], central_wv).T
+print(wabr)
+
+# Plot the transverse ray aberrations
+abr_plt = plt.figure(FigureClass=RayFanFigure, opt_model=opm,
+          data_type='Ray', scale_type=Fit.All_Same, is_dark=False).plot()
+# Plot the wavefront aberration
+wav_plt = plt.figure(FigureClass=RayFanFigure, opt_model=opm,
+          data_type='OPD', scale_type=Fit.All_Same, is_dark=False).plot()
+# Plot spot diagrams
+spot_plt = plt.figure(FigureClass=SpotDiagramFigure, opt_model=opm,
+                      scale_type=Fit.User_Scale, user_scale_value=0.1, is_dark=False).plot()
 
 print('done')
