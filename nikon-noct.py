@@ -5,6 +5,8 @@ from rayoptics.optical.opticalmodel import OpticalModel
 from rayoptics.raytr.opticalspec import PupilSpec, FieldSpec, WvlSpec
 from rayoptics.raytr import trace
 import matplotlib.pyplot as plt
+from numpy import sqrt
+from numpy.linalg import norm
 
 # New glass types
 # d,F,C,g
@@ -223,7 +225,39 @@ abr_plt = plt.figure(FigureClass=RayFanFigure, opt_model=opm,
 wav_plt = plt.figure(FigureClass=RayFanFigure, opt_model=opm,
           data_type='OPD', scale_type=Fit.All_Same, is_dark=False).plot()
 # Plot spot diagrams
-spot_plt = plt.figure(FigureClass=SpotDiagramFigure, opt_model=opm,
-                      scale_type=Fit.User_Scale, user_scale_value=0.1, is_dark=False).plot()
+#spot_plt = plt.figure(FigureClass=SpotDiagramFigure, opt_model=opm,
+#                      scale_type=Fit.User_Scale, user_scale_value=0.1, is_dark=False).plot()
+
+
+def spot(p, wi, ray_pkg, fld, wvl, foc):
+    if ray_pkg is not None:
+        image_pt = fld.ref_sphere[0]
+        ray = ray_pkg[mc.ray]
+        dist = foc / ray[-1][mc.d][2]
+        defocused_pt = ray[-1][mc.p] + dist * ray[-1][mc.d]
+        t_abr = defocused_pt - image_pt
+        return np.array([t_abr[0], t_abr[1]])
+    else:
+        return None
+
+
+grids = sm.trace_grid(spot,fi=1,wl=1,num_rays=21,form='list',append_if_none=False)
+max = 0.0
+mean = 0.0
+size = 0
+spotresults = grids[0][0]
+size += spotresults.shape[0]
+for pp in spotresults:
+    print("pupil = ", pp)
+    len = norm(pp)
+    print("len = ", len)
+    if len > max:
+        max = len
+    mean += (len*len)
+
+mean = sqrt(mean/size)
+
+print("mean = ", mean*1000)
+print("max = ", max*1000)
 
 print('done')
