@@ -3,10 +3,11 @@ from rayoptics.environment import *
 from rayoptics.elem.profiles import EvenPolynomial
 from rayoptics.optical.opticalmodel import OpticalModel
 from rayoptics.raytr.opticalspec import PupilSpec, FieldSpec, WvlSpec
-from rayoptics.raytr import trace
+from rayoptics.raytr import trace, vigcalc
 import matplotlib.pyplot as plt
 from numpy import sqrt
 from numpy.linalg import norm
+from rayoptics.raytr.trace import apply_paraxial_vignetting
 
 # New glass types
 # d,F,C,g
@@ -34,7 +35,7 @@ pm = opm.parax_model
 ar = opm['analysis_results']
 
 osp.pupil = PupilSpec(osp, key=['image', 'f/#'], value=0.98)
-osp.field_of_view = FieldSpec(osp, key=['object', 'angle'], flds=[0., 19.98])
+osp.field_of_view = FieldSpec(osp, key=['object', 'angle'], flds=[0.0, 19.98])
 osp.spectral_region = WvlSpec([(486.1327, 0.5), (587.5618, 1.0), (656.2725, 0.5)], ref_wl=1)
 opm.system_spec.title = 'WO2019-229849 Example 1 (Nikkor Z 58mm f/0.95 S)'
 opm.system_spec.dimensions = 'MM'
@@ -183,7 +184,9 @@ sm.list_surfaces()
 sm.list_gaps()
 sm.do_apertures = False
 opm.update_model()
-#apply_paraxial_vignetting(opm)
+apply_paraxial_vignetting(opm)
+#vigcalc.set_vig(opm, use_bisection=True)
+opm.update_model()
 sm.list_model()
 sm.list_decenters(full=True)
 # List the optical specifications

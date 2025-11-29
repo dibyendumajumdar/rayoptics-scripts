@@ -2,7 +2,7 @@ from opticalglass import opticalmedium as om
 from rayoptics.elem.profiles import EvenPolynomial
 from rayoptics.optical.opticalmodel import OpticalModel
 from rayoptics.raytr.opticalspec import PupilSpec, FieldSpec, WvlSpec
-from rayoptics.raytr import trace
+from rayoptics.raytr import trace, wideangle
 
 opm = OpticalModel()
 sm  = opm.seq_model
@@ -109,3 +109,6 @@ print(all_fields)
 rays = trace.trace_boundary_rays(opm)
 
 print('done')
+
+result = wideangle.eval_real_image_ht(opm,osp.field_of_view.fields[1],587.5618)
+print(result)
